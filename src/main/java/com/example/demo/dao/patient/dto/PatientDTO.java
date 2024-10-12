@@ -5,7 +5,6 @@ public record PatientDTO(
         String name,
         String email,
         String doctorName,
-        String patientCode,
         int age,
         char gender,
         float weight,

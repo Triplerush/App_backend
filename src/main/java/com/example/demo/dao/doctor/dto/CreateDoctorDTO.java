@@ -2,7 +2,7 @@
 package com.example.demo.dao.doctor.dto;
 
 public record CreateDoctorDTO(
-        String name,
+        String username,
         String email,
         String password,
         String specialty,

@@ -4,7 +4,7 @@ import com.example.demo.dao.user.Role;
 
 public record ListUserDTO(
         Long idUser,
-        String name,
+        String username,
         String email,
         Role role,
         String token

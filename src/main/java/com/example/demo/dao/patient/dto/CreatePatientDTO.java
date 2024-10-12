@@ -6,7 +6,6 @@ public record CreatePatientDTO(
         String email,
         String password,
         Long doctorId,
-        String patientCode,
         int age,
         char gender,
         float weight,

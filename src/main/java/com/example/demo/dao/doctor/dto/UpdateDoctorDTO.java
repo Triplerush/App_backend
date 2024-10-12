@@ -1,7 +1,7 @@
 package com.example.demo.dao.doctor.dto;
 
 public record UpdateDoctorDTO(
-        String name,
+        String username,
         String specialty,
         String phone,
         String password

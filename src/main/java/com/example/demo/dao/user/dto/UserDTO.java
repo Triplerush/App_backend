@@ -4,7 +4,7 @@ import com.example.demo.dao.user.Role;
 
 public record UserDTO(
         Long idUser,
-        String name,
+        String username,
         String email,
         Role role,
         Boolean active,

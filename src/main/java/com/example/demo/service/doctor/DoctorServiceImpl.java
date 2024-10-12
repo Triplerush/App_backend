@@ -60,7 +60,7 @@ public class DoctorServiceImpl implements DoctorService {
     public DoctorDTO createDoctor(CreateDoctorDTO request) {
         // Crear usuario
         CreateUserDTO user = new CreateUserDTO(
-                request.name(),
+                request.username(),
                 request.email(),
                 request.password(),
                 Role.DOCTOR,
@@ -85,8 +85,8 @@ public class DoctorServiceImpl implements DoctorService {
                     doctor.setPhone(request.phone());
 
                     User user = doctor.getUser();
-                    if (request.name() != null) {
-                        user.setName(request.name());
+                    if (request.username() != null) {
+                        user.setName(request.username());
                     }
 
                     if (request.password() != null && !request.password().isEmpty()) {
