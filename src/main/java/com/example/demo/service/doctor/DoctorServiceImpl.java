@@ -4,12 +4,12 @@ import com.example.demo.dao.doctor.Doctor;
 import com.example.demo.dao.doctor.DoctorRepository;
 import com.example.demo.dao.doctor.dto.CreateDoctorDTO;
 import com.example.demo.dao.doctor.dto.DoctorDTO;
-import com.example.demo.dao.doctor.dto.ListDoctorDTO;
 import com.example.demo.dao.doctor.dto.UpdateDoctorDTO;
 import com.example.demo.dao.user.Role;
 import com.example.demo.dao.user.User;
 import com.example.demo.dao.user.dto.CreateUserDTO;
 import com.example.demo.dao.user.dto.UpdateUserDTO;
+import com.example.demo.dao.user.dto.UserDTO;
 import com.example.demo.service.user.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,16 +28,24 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ListDoctorDTO> listDoctors(Pageable pageable) {
+    public Page<DoctorDTO> listDoctors(Pageable pageable) {
         return doctorRepository.findByActiveTrue(pageable)
-                .map(doctor -> new ListDoctorDTO(
+                .map(doctor -> new DoctorDTO(
                         doctor.getIdDoctor(),
-                        doctor.getUser().getName(),
-                        doctor.getUser().getEmail(),
+                        new UserDTO(
+                                doctor.getUser().getIdUser(),
+                                doctor.getUser().getName(),
+                                doctor.getUser().getEmail(),
+                                doctor.getUser().getRole(),
+                                doctor.getUser().isActive(),
+                                doctor.getUser().getToken()
+                        ),
                         doctor.getSpecialty(),
-                        doctor.getPhone()
+                        doctor.getPhone(),
+                        doctor.isActive()
                 ));
     }
+
 
 
     @Override
@@ -46,15 +54,19 @@ public class DoctorServiceImpl implements DoctorService {
         return doctorRepository.findById(id)
                 .map(doctor -> new DoctorDTO(
                         doctor.getIdDoctor(),
-                        doctor.getUser().getName(),
-                        doctor.getUser().getEmail(),
+                        new UserDTO( // Creación del UserDTO directamente aquí
+                                doctor.getUser().getIdUser(),
+                                doctor.getUser().getName(),
+                                doctor.getUser().getEmail(),
+                                doctor.getUser().getRole(),
+                                doctor.getUser().isActive(),
+                                doctor.getUser().getToken()
+                        ),
                         doctor.getSpecialty(),
                         doctor.getPhone(),
-                        doctor.isActive(),
-                        doctor.getUser().isActive()
+                        doctor.isActive()
                 ));
     }
-
 
     @Override
     public DoctorDTO createDoctor(CreateDoctorDTO request) {
@@ -102,17 +114,20 @@ public class DoctorServiceImpl implements DoctorService {
 
                     return new DoctorDTO(
                             updatedDoctor.getIdDoctor(),
-                            updatedDoctor.getUser().getName(),
-                            updatedDoctor.getUser().getEmail(),
+                            new UserDTO( // Creación del UserDTO directamente aquí
+                                    updatedDoctor.getUser().getIdUser(),
+                                    updatedDoctor.getUser().getName(),
+                                    updatedDoctor.getUser().getEmail(),
+                                    updatedDoctor.getUser().getRole(),
+                                    updatedDoctor.getUser().isActive(),
+                                    updatedDoctor.getUser().getToken()
+                            ),
                             updatedDoctor.getSpecialty(),
                             updatedDoctor.getPhone(),
-                            updatedDoctor.isActive(),
-                            updatedDoctor.getUser().isActive()
+                            updatedDoctor.isActive() // Estado activo del doctor
                     );
                 }).orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + id));
     }
-
-
 
     @Override
     public void deleteDoctor(Long id) {
@@ -144,12 +159,17 @@ public class DoctorServiceImpl implements DoctorService {
     private DoctorDTO mapToDoctorDTO(Doctor doctor) {
         return new DoctorDTO(
                 doctor.getIdDoctor(),
-                doctor.getUser().getName(),
-                doctor.getUser().getEmail(),
+                new UserDTO(
+                        doctor.getUser().getIdUser(),
+                        doctor.getUser().getName(),
+                        doctor.getUser().getEmail(),
+                        doctor.getUser().getRole(),
+                        doctor.getUser().isActive(),
+                        doctor.getUser().getToken()
+                ),
                 doctor.getSpecialty(),
                 doctor.getPhone(),
-                doctor.isActive(),
-                doctor.getUser().isActive()
+                doctor.isActive()
         );
     }
 }

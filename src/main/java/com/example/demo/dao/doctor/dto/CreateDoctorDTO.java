@@ -1,10 +1,12 @@
 // Doctor DTOs
 package com.example.demo.dao.doctor.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 public record CreateDoctorDTO(
-        String username,
-        String email,
-        String password,
+        @NotNull String username,
+        @NotNull String email,
+        @NotNull String password,
         String specialty,
         String phone
 ) {}

@@ -19,8 +19,8 @@ public class DoctorController {
     private final DoctorService doctorService;
 
     @GetMapping
-    public ResponseEntity<Page<ListDoctorDTO>> listDoctors(Pageable pageable) {
-        Page<ListDoctorDTO> doctors = doctorService.listDoctors(pageable);
+    public ResponseEntity<Page<DoctorDTO>> listDoctors(Pageable pageable) {
+        Page<DoctorDTO> doctors = doctorService.listDoctors(pageable);
         return ResponseEntity.ok(doctors);
     }
 

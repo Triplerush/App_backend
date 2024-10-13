@@ -1,14 +1,13 @@
-// Patient DTOs
 package com.example.demo.dao.patient.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 public record CreatePatientDTO(
-        String name,
-        String email,
-        String password,
-        Long doctorId,
-        int age,
+        @NotNull String username,
+        @NotNull String email,
+        @NotNull String password,
+        @NotNull int age,
         char gender,
         float weight,
-        float height,
-        String medicalConditions
+        float height
 ) {}

@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 
 public interface DoctorService {
-    Page<ListDoctorDTO> listDoctors(Pageable pageable);
+    Page<DoctorDTO> listDoctors(Pageable pageable);
     Optional<DoctorDTO> findDoctorById(Long id);
     DoctorDTO createDoctor(CreateDoctorDTO request);
     DoctorDTO updateDoctor(Long id, UpdateDoctorDTO request);
