@@ -1,4 +1,4 @@
--- V3__Create_stratum_table.sql
+-- V3__create_stratum_table.sql
 
 CREATE TABLE strata
 (

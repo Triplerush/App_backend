@@ -1,5 +1,7 @@
 package com.example.demo.service.stratum;
 
+import com.example.demo.dao.recommendation.Recommendation;
+import com.example.demo.dao.recommendation.RecommendationRepository;
 import com.example.demo.dao.stratum.Stratum;
 import com.example.demo.dao.stratum.StratumRepository;
 import com.example.demo.dao.stratum.dto.CreateStratumDTO;
@@ -11,7 +13,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -19,6 +24,7 @@ import java.util.Optional;
 public class StratumServiceImpl implements StratumService {
 
     private final StratumRepository stratumRepository;
+    private final RecommendationRepository recommendationRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -49,6 +55,7 @@ public class StratumServiceImpl implements StratumService {
         Stratum stratum = new Stratum();
         stratum.setStratumName(request.stratumName());
         stratum.setDescription(request.description());
+        stratum.setRecommendations(request.recommendations());
         stratum.setActive(true);
 
         stratum = stratumRepository.save(stratum);
@@ -61,20 +68,30 @@ public class StratumServiceImpl implements StratumService {
     }
 
     @Override
+    @Transactional
     public StratumDTO updateStratum(Long id, UpdateStratumDTO request) {
-        return stratumRepository.findById(id)
-                .map(stratum -> {
-                    stratum.setStratumName(request.stratumName());
-                    stratum.setDescription(request.description());
+        Stratum stratum = stratumRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Stratum not found with ID: " + id));
 
-                    Stratum updatedStratum = stratumRepository.save(stratum);
-                    return new StratumDTO(
-                            updatedStratum.getIdStratum(),
-                            updatedStratum.getStratumName(),
-                            updatedStratum.getDescription(),
-                            updatedStratum.isActive()
-                    );
-                }).orElseThrow(() -> new RuntimeException("Stratum not found with ID: " + id));
+        stratum.setStratumName(request.stratumName());
+        stratum.setDescription(request.description());
+
+        Set<Recommendation> recommendations = new HashSet<>();
+        for (Long recId : request.recommendationIds()) {
+            Recommendation recommendation = recommendationRepository.findById(recId)
+                    .orElseThrow(() -> new RuntimeException("Recommendation not found with ID: " + recId));
+            recommendations.add(recommendation);
+        }
+        stratum.setRecommendations(recommendations);
+
+        Stratum updatedStratum = stratumRepository.save(stratum);
+
+        return new StratumDTO(
+                updatedStratum.getIdStratum(),
+                updatedStratum.getStratumName(),
+                updatedStratum.getDescription(),
+                updatedStratum.isActive()
+        );
     }
 
     @Override
