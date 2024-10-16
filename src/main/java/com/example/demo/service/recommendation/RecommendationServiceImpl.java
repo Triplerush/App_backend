@@ -23,20 +23,14 @@ public class RecommendationServiceImpl implements RecommendationService {
     @Transactional(readOnly = true)
     public Page<RecommendationDTO> listRecommendations(Pageable pageable) {
         return recommendationRepository.findByActiveTrue(pageable)
-                .map(recommendation -> new RecommendationDTO(
-                        recommendation.getIdRecommendation(),
-                        recommendation.getContent(),
-                        recommendation.isActive()));
+                .map(this::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<RecommendationDTO> findById(Long id) {
         return recommendationRepository.findByIdRecommendation(id)
-                .map(recommendation -> new RecommendationDTO(
-                        recommendation.getIdRecommendation(),
-                        recommendation.getContent(),
-                        recommendation.isActive()));
+                .map(this::toDTO);
     }
 
     @Override
@@ -44,12 +38,8 @@ public class RecommendationServiceImpl implements RecommendationService {
         Recommendation recommendation = new Recommendation();
         recommendation.setContent(request.content());
         recommendation.setActive(true);
-        recommendation = recommendationRepository.save(recommendation);
 
-        return new RecommendationDTO(
-                recommendation.getIdRecommendation(),
-                recommendation.getContent(),
-                recommendation.isActive());
+        return toDTO(recommendationRepository.save(recommendation));
     }
 
     @Override
@@ -57,18 +47,27 @@ public class RecommendationServiceImpl implements RecommendationService {
         return recommendationRepository.findById(id)
                 .map(recommendation -> {
                     recommendation.setContent(request.content());
-                    return new RecommendationDTO(
-                            recommendation.getIdRecommendation(),
-                            recommendation.getContent(),
-                            recommendation.isActive());
-                }).orElseThrow(() -> new RuntimeException("Recommendation not found."));
+                    return toDTO(recommendationRepository.save(recommendation));
+                })
+                .orElseThrow(() -> new RuntimeException("Recommendation not found."));
     }
 
     @Override
     public void delete(Long id) {
-        recommendationRepository.findById(id).ifPresent(recommendation -> {
-            recommendation.setActive(false);
-            recommendationRepository.save(recommendation);
-        });
+        recommendationRepository.findById(id)
+                .ifPresentOrElse(recommendation -> {
+                    recommendation.setActive(false);
+                    recommendationRepository.save(recommendation);
+                }, () -> {
+                    throw new RuntimeException("Recommendation not found.");
+                });
+    }
+
+    private RecommendationDTO toDTO(Recommendation recommendation) {
+        return new RecommendationDTO(
+                recommendation.getIdRecommendation(),
+                recommendation.getContent(),
+                recommendation.isActive()
+        );
     }
 }

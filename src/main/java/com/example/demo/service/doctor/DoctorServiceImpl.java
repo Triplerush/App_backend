@@ -23,6 +23,7 @@ import java.util.Optional;
 @Transactional
 @AllArgsConstructor
 public class DoctorServiceImpl implements DoctorService {
+
     private final DoctorRepository doctorRepository;
     private final UserService userService;
 
@@ -30,147 +31,85 @@ public class DoctorServiceImpl implements DoctorService {
     @Transactional(readOnly = true)
     public Page<DoctorDTO> listDoctors(Pageable pageable) {
         return doctorRepository.findByActiveTrue(pageable)
-                .map(doctor -> new DoctorDTO(
-                        doctor.getIdDoctor(),
-                        new UserDTO(
-                                doctor.getUser().getIdUser(),
-                                doctor.getUser().getName(),
-                                doctor.getUser().getEmail(),
-                                doctor.getUser().getRole(),
-                                doctor.getUser().isActive(),
-                                doctor.getUser().getToken()
-                        ),
-                        doctor.getSpecialty(),
-                        doctor.getPhone(),
-                        doctor.isActive()
-                ));
+                .map(this::mapToDoctorDTO);
     }
-
-
 
     @Override
     @Transactional(readOnly = true)
     public Optional<DoctorDTO> findDoctorById(Long id) {
         return doctorRepository.findById(id)
-                .map(doctor -> new DoctorDTO(
-                        doctor.getIdDoctor(),
-                        new UserDTO( // Creación del UserDTO directamente aquí
-                                doctor.getUser().getIdUser(),
-                                doctor.getUser().getName(),
-                                doctor.getUser().getEmail(),
-                                doctor.getUser().getRole(),
-                                doctor.getUser().isActive(),
-                                doctor.getUser().getToken()
-                        ),
-                        doctor.getSpecialty(),
-                        doctor.getPhone(),
-                        doctor.isActive()
-                ));
+                .map(this::mapToDoctorDTO);
     }
 
     @Override
     public DoctorDTO createDoctor(CreateDoctorDTO request) {
-        // Crear usuario
-        CreateUserDTO user = new CreateUserDTO(
+        User user = userService.createUser(new CreateUserDTO(
                 request.username(),
                 request.email(),
                 request.password(),
                 Role.DOCTOR,
                 null
-        );
+        ));
 
-        // Crear doctor
         Doctor doctor = new Doctor();
-        doctor.setUser(userService.createUser(user));
+        doctor.setUser(user);
         doctor.setSpecialty(request.specialty());
         doctor.setPhone(request.phone());
-        doctor = doctorRepository.save(doctor);
 
-        return mapToDoctorDTO(doctor);
+        return mapToDoctorDTO(doctorRepository.save(doctor));
     }
 
     @Override
     public DoctorDTO updateDoctor(Long id, UpdateDoctorDTO request) {
         return doctorRepository.findById(id)
                 .map(doctor -> {
-                    doctor.setSpecialty(request.specialty());
-                    doctor.setPhone(request.phone());
+                    Optional.ofNullable(request.specialty()).ifPresent(doctor::setSpecialty);
+                    Optional.ofNullable(request.phone()).ifPresent(doctor::setPhone);
 
                     User user = doctor.getUser();
-                    if (request.username() != null) {
-                        user.setName(request.username());
+                    if (user != null) {
+                        Optional.ofNullable(request.username()).ifPresent(user::setName);
+                        Optional.ofNullable(request.password()).ifPresent(user::setPassword);
                     }
 
-                    if (request.password() != null && !request.password().isEmpty()) {
-                        user.setPassword(request.password());
-                    }
-
-                    userService.updateUser(user.getIdUser(), new UpdateUserDTO(
-                            user.getName(),
-                            user.getPassword()
-                    ));
-
-                    Doctor updatedDoctor = doctorRepository.save(doctor);
-
-                    return new DoctorDTO(
-                            updatedDoctor.getIdDoctor(),
-                            new UserDTO( // Creación del UserDTO directamente aquí
-                                    updatedDoctor.getUser().getIdUser(),
-                                    updatedDoctor.getUser().getName(),
-                                    updatedDoctor.getUser().getEmail(),
-                                    updatedDoctor.getUser().getRole(),
-                                    updatedDoctor.getUser().isActive(),
-                                    updatedDoctor.getUser().getToken()
-                            ),
-                            updatedDoctor.getSpecialty(),
-                            updatedDoctor.getPhone(),
-                            updatedDoctor.isActive() // Estado activo del doctor
-                    );
-                }).orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + id));
+                    return mapToDoctorDTO(doctorRepository.save(doctor));
+                })
+                .orElseThrow(() -> new RuntimeException("Doctor not found with ID: " + id));
     }
 
     @Override
     public void deleteDoctor(Long id) {
         doctorRepository.findById(id)
-                .ifPresentOrElse(
-                        doctor -> {
-                            // Desactivar al doctor
-                            doctor.setActive(false);
-
-                            // Desactivar al usuario asociado
-                            User user = doctor.getUser();
-                            user.setActive(false);
-
-                            // Guardamos ambas entidades
-                            userService.updateUser(user.getIdUser(), new UpdateUserDTO(
-                                    user.getName(),
-                                    user.getPassword()
-                            ));
-
-                            doctorRepository.save(doctor);
-                        },
-                        () -> {
-                            throw new RuntimeException("Doctor not found with ID: " + id);
-                        }
-                );
+                .ifPresentOrElse(this::deactivateDoctor,
+                        () -> { throw new RuntimeException("Doctor not found with ID: " + id); });
     }
 
+    private void deactivateDoctor(Doctor doctor) {
+        doctor.setActive(false);
+        User user = doctor.getUser();
+        user.setActive(false);
+        userService.updateUser(user.getIdUser(), new UpdateUserDTO(user.getName(), user.getPassword()));
+        doctorRepository.save(doctor);
+    }
 
     private DoctorDTO mapToDoctorDTO(Doctor doctor) {
         return new DoctorDTO(
                 doctor.getIdDoctor(),
-                new UserDTO(
-                        doctor.getUser().getIdUser(),
-                        doctor.getUser().getName(),
-                        doctor.getUser().getEmail(),
-                        doctor.getUser().getRole(),
-                        doctor.getUser().isActive(),
-                        doctor.getUser().getToken()
-                ),
+                mapToUserDTO(doctor.getUser()),
                 doctor.getSpecialty(),
                 doctor.getPhone(),
                 doctor.isActive()
         );
     }
-}
 
+    private UserDTO mapToUserDTO(User user) {
+        return new UserDTO(
+                user.getIdUser(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                user.isActive(),
+                user.getToken()
+        );
+    }
+}

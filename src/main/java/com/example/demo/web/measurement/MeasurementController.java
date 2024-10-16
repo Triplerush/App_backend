@@ -1,5 +1,6 @@
 package com.example.demo.web.measurement;
 
+import com.example.demo.dao.measurement.dto.CreateMeasurementDTO;
 import com.example.demo.dao.measurement.dto.MeasurementDTO;
 import com.example.demo.service.measurement.MeasurementService;
 import lombok.AllArgsConstructor;
@@ -13,18 +14,29 @@ import java.util.List;
 public class MeasurementController {
     private final MeasurementService measurementService;
 
-    @GetMapping("/{patientId}")
+    @GetMapping("/patient/{patientId}")
     public List<MeasurementDTO> listMeasurements(@PathVariable Long patientId) {
         return measurementService.listByPatientId(patientId);
     }
 
     @PostMapping
-    public MeasurementDTO createMeasurement(@RequestBody MeasurementDTO request) {
+    public MeasurementDTO createMeasurement(@RequestBody CreateMeasurementDTO request) {
         return measurementService.createMeasurement(request);
     }
 
+    @GetMapping("/{id}")
+    public MeasurementDTO getMeasurementById(@PathVariable Long id) {
+        return measurementService.getMeasurementById(id)
+                .orElseThrow(() -> new RuntimeException("Measurement not found or not active"));
+    }
+
+    @GetMapping
+    public List<MeasurementDTO> listMeasurements() {
+        return measurementService.listMeasurements();
+    }
+
     @PutMapping("/{id}")
-    public MeasurementDTO updateMeasurement(@PathVariable Long id, @RequestBody MeasurementDTO request) {
+    public MeasurementDTO updateMeasurement(@PathVariable Long id, @RequestBody CreateMeasurementDTO request) {
         return measurementService.updateMeasurement(id, request);
     }
 

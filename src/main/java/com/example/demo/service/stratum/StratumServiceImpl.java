@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,24 +31,14 @@ public class StratumServiceImpl implements StratumService {
     @Transactional(readOnly = true)
     public Page<StratumDTO> listStrata(Pageable pageable) {
         return stratumRepository.findByActiveTrue(pageable)
-                .map(stratum -> new StratumDTO(
-                        stratum.getIdStratum(),
-                        stratum.getStratumName(),
-                        stratum.getDescription(),
-                        stratum.isActive()
-                ));
+                .map(this::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<StratumDTO> findStratumById(Long id) {
         return stratumRepository.findByIdStratum(id)
-                .map(stratum -> new StratumDTO(
-                        stratum.getIdStratum(),
-                        stratum.getStratumName(),
-                        stratum.getDescription(),
-                        stratum.isActive()
-                ));
+                .map(this::toDTO);
     }
 
     @Override
@@ -58,13 +49,7 @@ public class StratumServiceImpl implements StratumService {
         stratum.setRecommendations(request.recommendations());
         stratum.setActive(true);
 
-        stratum = stratumRepository.save(stratum);
-        return new StratumDTO(
-                stratum.getIdStratum(),
-                stratum.getStratumName(),
-                stratum.getDescription(),
-                stratum.isActive()
-        );
+        return toDTO(stratumRepository.save(stratum));
     }
 
     @Override
@@ -73,25 +58,18 @@ public class StratumServiceImpl implements StratumService {
         Stratum stratum = stratumRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Stratum not found with ID: " + id));
 
-        stratum.setStratumName(request.stratumName());
-        stratum.setDescription(request.description());
+        Optional.ofNullable(request.stratumName()).ifPresent(stratum::setStratumName);
+        Optional.ofNullable(request.description()).ifPresent(stratum::setDescription);
 
-        Set<Recommendation> recommendations = new HashSet<>();
-        for (Long recId : request.recommendationIds()) {
-            Recommendation recommendation = recommendationRepository.findById(recId)
-                    .orElseThrow(() -> new RuntimeException("Recommendation not found with ID: " + recId));
-            recommendations.add(recommendation);
+        if (request.recommendationIds() != null) {
+            Set<Recommendation> recommendations = request.recommendationIds().stream()
+                    .map(recId -> recommendationRepository.findById(recId)
+                            .orElseThrow(() -> new RuntimeException("Recommendation not found with ID: " + recId)))
+                    .collect(Collectors.toSet());
+            stratum.setRecommendations(recommendations);
         }
-        stratum.setRecommendations(recommendations);
 
-        Stratum updatedStratum = stratumRepository.save(stratum);
-
-        return new StratumDTO(
-                updatedStratum.getIdStratum(),
-                updatedStratum.getStratumName(),
-                updatedStratum.getDescription(),
-                updatedStratum.isActive()
-        );
+        return toDTO(stratumRepository.save(stratum));
     }
 
     @Override
@@ -104,5 +82,20 @@ public class StratumServiceImpl implements StratumService {
                     throw new RuntimeException("Stratum not found with ID: " + id);
                 });
     }
-}
 
+    private StratumDTO toDTO(Stratum stratum) {
+        List<String> recommendationDescriptions = Optional.ofNullable(stratum.getRecommendations())
+                .orElseGet(HashSet::new)
+                .stream()
+                .map(Recommendation::getContent)
+                .collect(Collectors.toList());
+
+        return new StratumDTO(
+                stratum.getIdStratum(),
+                stratum.getStratumName(),
+                stratum.getDescription(),
+                stratum.isActive(),
+                recommendationDescriptions
+        );
+    }
+}

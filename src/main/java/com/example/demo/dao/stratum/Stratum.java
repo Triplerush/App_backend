@@ -14,13 +14,13 @@ import java.util.Set;
 @Table(name = "strata")
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true) // Solo incluir campos explícitos en equals/hashCode
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Stratum {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_stratum")
-    @EqualsAndHashCode.Include // Incluir este campo en equals y hashCode
+    @EqualsAndHashCode.Include
     private Long idStratum;
 
     @Column(name = "stratum_name", nullable = false)
@@ -37,5 +37,4 @@ public class Stratum {
     )
     private Set<Recommendation> recommendations;
 
-    // La colección recommendations se excluye de equals y hashCode
 }

@@ -1,6 +1,8 @@
 package com.example.demo.dao.recommendation.dto;
 
-import java.util.Set;
+import jakarta.validation.constraints.NotBlank;
 
-public record CreateRecommendationDTO(String content, Set<Long> stratumIds
-                                      ) {}
+public record CreateRecommendationDTO(
+        @NotBlank String content
+) {
+}

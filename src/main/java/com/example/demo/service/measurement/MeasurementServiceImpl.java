@@ -2,9 +2,11 @@ package com.example.demo.service.measurement;
 
 import com.example.demo.dao.measurement.Measurement;
 import com.example.demo.dao.measurement.MeasurementRepository;
+import com.example.demo.dao.measurement.dto.CreateMeasurementDTO;
 import com.example.demo.dao.measurement.dto.MeasurementDTO;
 import com.example.demo.dao.patient.PatientRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +41,23 @@ public class MeasurementServiceImpl implements MeasurementService {
     }
 
     @Override
-    public MeasurementDTO createMeasurement(MeasurementDTO request) {
+    @Transactional(readOnly = true)
+    public Optional<MeasurementDTO> getMeasurementById(Long id) {
+        return measurementRepository.findByIdMeasurement(id)
+                .map(this::mapToMeasurementDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MeasurementDTO> listMeasurements() {
+        return measurementRepository.findByActiveTrue()
+                .stream()
+                .map(this::mapToMeasurementDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public MeasurementDTO createMeasurement(CreateMeasurementDTO request) {
         Measurement measurement = new Measurement();
         measurement.setPatient(patientRepository.findById(request.patientId())
                 .orElseThrow(() -> new RuntimeException("Patient not found")));
@@ -48,14 +66,14 @@ public class MeasurementServiceImpl implements MeasurementService {
         measurement.setDiastolicPressure(request.diastolicPressure());
         measurement.setHeartRate(request.heartRate());
         measurement.setNotes(request.notes());
-        measurement.setActive(request.active());
+        measurement.setActive(true);
 
         measurement = measurementRepository.save(measurement);
         return mapToMeasurementDTO(measurement);
     }
 
     @Override
-    public MeasurementDTO updateMeasurement(Long id, MeasurementDTO request) {
+    public MeasurementDTO updateMeasurement(Long id, CreateMeasurementDTO request) {
         return measurementRepository.findById(id)
                 .map(measurement -> {
                     measurement.setMeasurementDate(request.measurementDate());

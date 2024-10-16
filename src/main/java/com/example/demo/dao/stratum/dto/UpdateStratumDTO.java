@@ -5,6 +5,6 @@ import java.util.Set;
 public record UpdateStratumDTO(
         String stratumName,
         String description,
-        Set<Long> recommendationIds // Cambia a Set<Long> para solo incluir los IDs
+        Set<Long> recommendationIds
 ) {
 }

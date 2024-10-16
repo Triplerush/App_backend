@@ -3,8 +3,8 @@ package com.example.demo.dao.medication.dto;
 import jakarta.validation.constraints.NotNull;
 import java.util.Date;
 
-public record MedicationDTO(
-        @NotNull Long idMedication,
+public record CreateMedicationDTO(
+        Long idMedication,
         @NotNull Long patientId,
         @NotNull String medicationName,
         @NotNull String dosage,
