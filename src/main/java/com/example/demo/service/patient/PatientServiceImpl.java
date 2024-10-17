@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.dao.recommendation.Recommendation;
 
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -92,25 +93,23 @@ public class PatientServiceImpl implements PatientService {
     }
 
     private void updateDoctor(UpdatePatientDTO request, Patient patient) {
-        Optional.ofNullable(request.idDoctor())
-                .ifPresent(doctorId -> doctorRepository.findById(doctorId).ifPresent(patient::setDoctor));
+        Optional.ofNullable(request.idDoctor()).flatMap(doctorRepository::findById).ifPresent(patient::setDoctor);
     }
 
     private void updateStratum(UpdatePatientDTO request, Patient patient) {
-        Optional.ofNullable(request.idStratum())
-                .ifPresent(stratumId -> stratumRepository.findById(stratumId).ifPresent(patient::setStratum));
+        Optional.ofNullable(request.idStratum()).flatMap(stratumRepository::findById).ifPresent(patient::setStratum);
     }
 
     private void updatePatientDetails(UpdatePatientDTO request, Patient patient) {
-        Optional.ofNullable(request.age())
+        Optional.of(request.age())
                 .filter(age -> age >= 0)
                 .ifPresent(patient::setAge);
-        Optional.ofNullable(request.gender())
+        Optional.of(request.gender())
                 .ifPresent(patient::setGender);
-        Optional.ofNullable(request.weight())
+        Optional.of(request.weight())
                 .filter(weight -> weight >= 0)
                 .ifPresent(patient::setWeight);
-        Optional.ofNullable(request.height())
+        Optional.of(request.height())
                 .filter(height -> height >= 0)
                 .ifPresent(patient::setHeight);
         Optional.ofNullable(request.medicalConditions())
@@ -176,7 +175,10 @@ public class PatientServiceImpl implements PatientService {
     }
 
     private StratumDTO toStratumDTO(Stratum stratum) {
-        List<String> recommendationDescriptions = stratum.getRecommendations()
+        if (stratum == null) return null;
+
+        List<String> recommendationDescriptions = Optional.ofNullable(stratum.getRecommendations())
+                .orElseGet(HashSet::new)
                 .stream()
                 .map(Recommendation::getContent)
                 .collect(Collectors.toList());
